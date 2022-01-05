@@ -9,7 +9,8 @@
 
 - to run the reflex-platform: reflex-platform/try-reflex
 - to compile (in the reflex-platform nix-shell):
-  nix-shell -A shells.ghcjs --run "cabal --project-file=cabal-ghcjs.project --builddir=dist-ghcjs new-build all"
+  nix-shell -A shells.ghcjs --run "cabal --project-file=cabal-ghcjs.project --builddir=dist-ghcjs new-build a
   
-The local path to the index.html file (root of the app) is printed at the end of the frontend compilation
+The local path to the index.html file (root of the app) is printed at the end of the frontend compilation, and can be
+launch with a classic browser while the server is running.
 
