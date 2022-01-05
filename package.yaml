@@ -1,0 +1,83 @@
+
+copyright: 2020 Ludovic Mignot
+
+description: Monadic expressions and their derivatives
+
+maintainer: ludovic.mignot@univ-rouen.fr
+
+dependencies:
+- aeson
+- servant
+- base >= 4.7 && < 5
+- semirings
+- hspec
+- QuickCheck
+- random
+- mtl
+- vector-sized
+- array
+- containers
+- constraints
+- singletons
+- text
+- wai-cors
+- servant-server
+- warp
+- html-entities
+
+name: RegExp
+
+version: 0.1.0.0
+
+extra-source-files:
+- backend/Parser/RegExpTok.x
+- backend/Parser/RegExpParser.y
+
+author: Ludovic Mignot
+
+license: BSD3
+
+build-tools :
+  - alex
+  - happy
+
+ghc-options:
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+  - -Widentities
+  - -Wmissing-export-lists
+  - -Wincomplete-uni-patterns
+  - -Wmissing-home-modules
+  - -Wpartial-fields
+  - -fwarn-incomplete-patterns
+  - -funbox-strict-fields
+  - -optc-O3
+  - -O2
+  - -Wall
+  - -W
+  - -Wincomplete-record-updates
+  - -Widentities
+  - -Wredundant-constraints
+  - -fprint-potential-instances
+  - -j
+
+library:
+  source-dirs: 
+      - backend
+      - common
+
+tests:
+  RegExp-test:
+    source-dirs:
+      - test
+    main: Spec.hs
+    dependencies:
+      - RegExp
+
+executables:
+  RegExp-exe:
+    source-dirs: app
+    main: Main.hs
+    dependencies:
+      - RegExp

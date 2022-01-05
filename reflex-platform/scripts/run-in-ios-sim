@@ -1,0 +1,34 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p jq
+
+set -euo pipefail
+
+name="${1##*/}"
+name="${name%.app}"
+
+bundleIdentifier="$name"
+if [ "$#" = 2 ]; then
+  bundleIdentifier="$2"
+fi
+
+runtime="$(xcrun simctl list runtimes -j | jq -r '.runtimes[].identifier' | head -n1)"
+uuid="$(xcrun simctl create "$name" com.apple.CoreSimulator.SimDeviceType.iPhone-8 "$runtime")"
+
+function cleanup {
+  if [ -n "$uuid" ]; then
+    echo "Cleaning up simulator" >&2
+    xcrun simctl shutdown "$uuid" 2>/dev/null
+    xcrun simctl delete "$uuid"
+  fi
+}
+trap cleanup EXIT
+
+echo Opening Simulator... >&2
+open -a Simulator --args -CurrentDeviceUDID "$uuid"
+sleep 20
+
+echo Installing "$name".app >&2
+xcrun simctl install "$uuid" "$1"
+
+echo Launching "$name" >&2
+xcrun simctl launch --console "$uuid" "$bundleIdentifier"

@@ -1,0 +1,16 @@
+cradle:
+  stack:
+    - path: "./backend"
+      component: "RegExp:lib"
+
+    - path: "./common"
+      component: "RegExp:lib"
+
+    - path: "./app/Main.hs"
+      component: "RegExp:exe:RegExp-exe"
+
+    - path: "./app/Paths_RegExp.hs"
+      component: "RegExp:exe:RegExp-exe"
+
+    - path: "./test"
+      component: "RegExp:test:RegExp-test"

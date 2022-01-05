@@ -1,0 +1,142 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 6a47aa53a8a669e988d8ac8352e8368fe905afe30cd9005830961a7e3ca44230
+
+name:           RegExp
+version:        0.1.0.0
+description:    Monadic expressions and their derivatives
+author:         Ludovic Mignot
+maintainer:     ludovic.mignot@univ-rouen.fr
+copyright:      2020 Ludovic Mignot
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    backend/Parser/RegExpTok.x
+    backend/Parser/RegExpParser.y
+
+library
+  exposed-modules:
+      API.API
+      Common
+      GenMonad.GenMonad
+      Graded.Graded
+      Graded.GradedFun
+      Graded.GradedModule
+      Graded.GradedVector
+      LinComb.LinComb4
+      Parser.RegExpFromString
+      Parser.RegExpParser
+      Parser.RegExpTok
+      RegExp.ArbitraryExp
+      RegExp.ExpDerivative
+      RegExp.MonadicRegExpWithFun
+      RegExp.OpClass
+      RegExp.OpDef
+      RegExp.OpDefTyped
+      Semimodule.Semimodule
+      SemiRingsDef.SemiRingsDef
+      Singletons.Singletons
+      ToString.ToString
+      Type.SumNat
+      Type.UnknownSizedVect
+      CommonAPI
+      Main
+  other-modules:
+      Paths_RegExp
+  hs-source-dirs:
+      backend
+      common
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Widentities -Wmissing-export-lists -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -fwarn-incomplete-patterns -funbox-strict-fields -optc-O3 -O2 -Wall -W -Wincomplete-record-updates -Widentities -Wredundant-constraints -fprint-potential-instances -j
+  build-tools:
+      alex
+    , happy
+  build-depends:
+      QuickCheck
+    , aeson
+    , array
+    , base >=4.7 && <5
+    , constraints
+    , containers
+    , hspec
+    , html-entities
+    , mtl
+    , random
+    , semirings
+    , servant
+    , servant-server
+    , singletons
+    , text
+    , vector-sized
+    , wai-cors
+    , warp
+  default-language: Haskell2010
+
+executable RegExp-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_RegExp
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Widentities -Wmissing-export-lists -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -fwarn-incomplete-patterns -funbox-strict-fields -optc-O3 -O2 -Wall -W -Wincomplete-record-updates -Widentities -Wredundant-constraints -fprint-potential-instances -j
+  build-tools:
+      alex
+    , happy
+  build-depends:
+      QuickCheck
+    , RegExp
+    , aeson
+    , array
+    , base >=4.7 && <5
+    , constraints
+    , containers
+    , hspec
+    , html-entities
+    , mtl
+    , random
+    , semirings
+    , servant
+    , servant-server
+    , singletons
+    , text
+    , vector-sized
+    , wai-cors
+    , warp
+  default-language: Haskell2010
+
+test-suite RegExp-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      RegExp.MonadicRegExpWithFunSpec
+      Paths_RegExp
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Widentities -Wmissing-export-lists -Wincomplete-uni-patterns -Wmissing-home-modules -Wpartial-fields -fwarn-incomplete-patterns -funbox-strict-fields -optc-O3 -O2 -Wall -W -Wincomplete-record-updates -Widentities -Wredundant-constraints -fprint-potential-instances -j
+  build-tools:
+      alex
+    , happy
+  build-depends:
+      QuickCheck
+    , RegExp
+    , aeson
+    , array
+    , base >=4.7 && <5
+    , constraints
+    , containers
+    , hspec
+    , html-entities
+    , mtl
+    , random
+    , semirings
+    , servant
+    , servant-server
+    , singletons
+    , text
+    , vector-sized
+    , wai-cors
+    , warp
+  default-language: Haskell2010
