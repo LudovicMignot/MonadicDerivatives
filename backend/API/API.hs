@@ -22,6 +22,7 @@ import           Data.Singletons                ( SingI )
 import           GenMonad.GenMonad              ( GenMonad
                                                 , GenMonadConstraint
                                                 )
+import           Graded.GradedModuleOfLinComb   ( GradedModuleOfLinComb )
 import qualified LinComb.LinComb4              as L4
 import           Network.Wai.Middleware.Cors    ( simpleCors )
 import           Parser.RegExpFromString        ( expFromString )
@@ -109,19 +110,26 @@ server = derivation :<|> getAlea
   derivation _       Nothing = return invalidRep
   derivation (Just e) (Just w)
     | not (isValidWord w) = return invalidRep
-    | otherwise = return $ DerComp (b_m || b_s || b_lb || b_li || b_ld)
-                                   True
-                                   res_m
-                                   res_s
-                                   res_lbool
-                                   res_lint
-                                   res_ldouble
+    | otherwise = return $ DerComp
+      (b_m || b_s || b_lb || b_li || b_ld || b_gb || b_gi || b_gd)
+      True
+      res_m
+      res_s
+      res_lbool
+      res_lint
+      res_ldouble
+      res_gbool
+      res_gint
+      res_gdouble
    where
     (b_m , res_m      ) = computeRes @Maybe e w
     (b_s , res_s      ) = computeRes @Set e w
     (b_lb, res_lbool  ) = computeRes @(L4.LinComb (SR Bool)) e w
     (b_li, res_lint   ) = computeRes @(L4.LinComb (SR Int)) e w
     (b_ld, res_ldouble) = computeRes @(L4.LinComb (SR Double)) e w
+    (b_gb, res_gbool  ) = computeRes @(GradedModuleOfLinComb (SR Bool)) e w
+    (b_gi, res_gint   ) = computeRes @(GradedModuleOfLinComb (SR Int)) e w
+    (b_gd, res_gdouble) = computeRes @(GradedModuleOfLinComb (SR Double)) e w
 
 
 derCompAPI :: Proxy DerCompAPI

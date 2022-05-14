@@ -20,9 +20,13 @@ import           Data.Foldable                 as F
                                                 )
 import qualified Data.Map.Strict               as Map2
 import           Data.Proxy                     ( Proxy(..) )
-import           Data.Semiring                  ( Semiring )
+import           Data.Semiring                  ( Semiring
+                                                , zero
+                                                )
 import qualified Data.Set                      as Set2
-import           Data.Singletons.TypeLits       ( KnownNat )
+import           Data.Singletons.TypeLits       ( KnownNat
+                                                , SNat(SNat)
+                                                )
 import           Data.Type.Equality             ( type (:~:)(Refl) )
 import           Data.Vector.Sized             as V
                                                 ( Vector
@@ -44,6 +48,18 @@ import           Graded.Graded                  ( Graded(..)
 import           Graded.GradedFun               ( Graduation(GradFun)
                                                 , NFun(f_name)
                                                 )
+import           Graded.GradedModule           as GM
+                                                ( GradedModule(GradMod)
+                                                , combineToModule
+                                                )
+import           Graded.GradedModuleOfLinComb  as GL
+                                                ( FunctorCompo
+                                                    ( FunctorCompo
+                                                    , run
+                                                    )
+                                                , GradedModuleOfLinComb(..)
+                                                , fromScalar
+                                                )
 import           LinComb.LinComb4              as L4
                                                 ( LinComb(LinComb)
                                                 , fromScalar
@@ -52,12 +68,14 @@ import           Prelude                 hiding ( head
                                                 , last
                                                 )
 import           RegExp.MonadicRegExpWithFun    ( MonadicRegExp(Empty, Fun)
+                                                , conc'
                                                 , leftAction'
                                                 , plus'
                                                 )
 import           RegExp.OpClass                 ( HasFun(..)
                                                 , HasName(..)
                                                 )
+import           Semimodule.Semimodule          ( Semimodule(..) )
 import           Type.UnknownSizedVect          ( UnknownSizedVect
                                                 , withSomevect
                                                 )
@@ -91,6 +109,10 @@ instance (Semiring weight, Ord weight) => ToExp (L4.LinComb weight) where
         (\acc e w -> leftAction' (L4.fromScalar w) e `plus'` acc)
         Empty
         l
+
+instance (Monoid t, Semiring t, Show t, Ord t, Ord a) => Semimodule (MonadicRegExp (GradedModuleOfLinComb t) a) (GradedModuleOfLinComb t (MonadicRegExp (GradedModuleOfLinComb t) a)) where
+    leftAction e fc = G.return $ e `conc'` toExp fc
+    rightAction fc e = G.return $ toExp fc `conc'` e
 
 data BooleanOp = Not | And | Impl | Or
   deriving (Eq, Ord)
@@ -149,6 +171,47 @@ instance {-# OVERLAPS #-} (Ord a) => HasFun BooleanOp 1 Set2.Set (MonadicRegExp 
 instance {-# OVERLAPS #-} (Ord a) => HasFun BooleanOp 2 Set2.Set (MonadicRegExp Set2.Set a) where
     fun GradOr es = fold es
     fun op     es = G.return $ Fun op $ V.map toExp es
+
+instance {-# OVERLAPS #-} (IsBool t)
+  => HasFun BooleanOp 1 (GradedModuleOfLinComb t) (MonadicRegExp (GradedModuleOfLinComb t) a) where
+    fun f@GradNot v =
+        Grd
+            $ FunctorCompo
+            $ combineToModule
+                  SNat
+                  (GradFun (name $ fromGrad f) (cast . not . cast . head))
+            $ fmap (run . \(Grd x) -> x) v
+
+instance {-# OVERLAPS #-} (IsBool t)
+  => HasFun BooleanOp 2 (GradedModuleOfLinComb t) (MonadicRegExp (GradedModuleOfLinComb t) a) where
+    fun f@GradOr v =
+        Grd
+            $ FunctorCompo
+            $ combineToModule
+                  SNat
+                  (GradFun (name $ fromGrad f)
+                           (\es -> cast $ cast (head es) || cast (last es))
+                  )
+            $ fmap (run . \(Grd x) -> x) v
+    fun f@GradAnd v =
+        Grd
+            $ FunctorCompo
+            $ combineToModule
+                  SNat
+                  (GradFun (name $ fromGrad f)
+                           (\es -> cast $ cast (head es) && cast (last es))
+                  )
+            $ fmap (run . \(Grd x) -> x) v
+    fun f@GradImpl v =
+        Grd
+            $ FunctorCompo
+            $ combineToModule
+                  SNat
+                  (GradFun
+                      (name $ fromGrad f)
+                      (\es -> cast $ not (cast (head es)) || cast (last es))
+                  )
+            $ fmap (run . \(Grd x) -> x) v
 
 notExp
     :: (IsBool (m ()), HasFun BooleanOp 1 m (MonadicRegExp m a))
@@ -222,6 +285,30 @@ instance {-# OVERLAPS #-}
     fun GradArithMean es = G.return $ Fun GradArithMean $ V.map toExp es
     fun GradGeomMean  es = G.return $ Fun GradGeomMean $ V.map toExp es
 
+instance {-# OVERLAPS #-}
+  (Floating weight)
+  => HasFun FloatingOp n (GradedModuleOfLinComb weight) (MonadicRegExp (GradedModuleOfLinComb weight) a) where
+    fun GradArithMean es =
+        Grd
+            $ FunctorCompo
+            $ combineToModule
+                  (knownLength es SNat)
+                  ( GradFun "/*/"
+                  $ \xs -> if length xs == 0
+                        then 0
+                        else sum xs / fromIntegral (length xs)
+                  )
+            $ fmap (run . \(Grd x) -> x) es
+    fun GradGeomMean es =
+        Grd
+            $ FunctorCompo
+            $ combineToModule
+                  (knownLength es SNat)
+                  (GradFun "/**/" $ \xs -> if length xs == 0
+                      then 1
+                      else product xs ** (1 / fromIntegral (length xs))
+                  )
+            $ fmap (run . \(Grd x) -> x) es
 
 arithMean, geomMean
     :: forall m n a
@@ -266,12 +353,27 @@ instance HasName (NFun t) where
 instance (Castable t (m ()), Castable (m ()) t) => HasFun (NFun t) n m () where
     fun (GradFun _ f) v = cast $ f $ fmap cast v
 
+instance HasFun (NFun t) n (GradedModuleOfLinComb t) (MonadicRegExp (GradedModuleOfLinComb t) a)where
+    fun f v =
+        Grd $ FunctorCompo $ combineToModule (knownLength v SNat) f $ fmap
+            (run . \(Grd x) -> x)
+            v
 
 instance
   (Semiring t, Ord a, Ord t)
   => HasFun (NFun t) n (L4.LinComb t) (MonadicRegExp (L4.LinComb t) a) where
     fun f es = G.return $ Fun f $ V.map toExp es
 
+instance (Semiring t, Show t, Eq t) => ToExp (GradedModuleOfLinComb t) where
+    toExp (Grd (FunctorCompo (GradMod f@(GradFun s _) v)))
+        | s == show (zero :: t) = Empty
+        | s == "id"             = foldMap toExp' v
+        | otherwise             = Fun f $ fmap toExp' v
+      where
+        toExp' (L4.LinComb l) = Map2.foldlWithKey
+            (\acc e w -> leftAction' (GL.fromScalar w) e `plus'` acc)
+            Empty
+            l
 
 gradExtDistFun :: (Num a, Ord a) => Graduation (NFun a) n
 gradExtDistFun = GradFun "ExtDist" $ \v -> maximum v - minimum v

@@ -19,13 +19,16 @@ type DerCompAPI
   :<|> "alea" :> Get '[JSON] String
 
 data DerComp = DerComp
-  { valid_expr         :: Bool
-  , valid_word         :: Bool
-  , res_maybe          :: (String, String, String)
-  , res_set            :: (String, String, String)
-  , res_lincomb_bool   :: (String, String, String)
-  , res_lincomb_int    :: (String, String, String)
-  , res_lincomb_double :: (String, String, String)
+  { valid_expr                  :: Bool
+  , valid_word                  :: Bool
+  , res_maybe                   :: (String, String, String)
+  , res_set                     :: (String, String, String)
+  , res_lincomb_bool            :: (String, String, String)
+  , res_lincomb_int             :: (String, String, String)
+  , res_lincomb_double          :: (String, String, String)
+  , res_gradmodoflincomb_bool   :: (String, String, String)
+  , res_gradmodoflincomb_int    :: (String, String, String)
+  , res_gradmodoflincomb_double :: (String, String, String)
   }
   deriving (Eq, Show, Generic)
 
@@ -43,8 +46,8 @@ invalidRep = DerComp False
                      invalidTriple
                      invalidTriple
                      invalidTriple
-                    --  invalidTriple
-                    --  invalidTriple
-                    --  invalidTriple
+                     invalidTriple
+                     invalidTriple
+                     invalidTriple
 
 

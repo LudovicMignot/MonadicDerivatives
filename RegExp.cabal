@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6a47aa53a8a669e988d8ac8352e8368fe905afe30cd9005830961a7e3ca44230
+-- hash: d9c2fb3bd82fd0f5ed80639475474d15ace74bee8b0c6d8cf7dabe2907e3eda7
 
 name:           RegExp
 version:        0.1.0.0
@@ -26,6 +26,7 @@ library
       Graded.Graded
       Graded.GradedFun
       Graded.GradedModule
+      Graded.GradedModuleOfLinComb
       Graded.GradedVector
       LinComb.LinComb4
       Parser.RegExpFromString

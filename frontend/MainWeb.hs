@@ -9,10 +9,10 @@
 module MainWeb where
 
 import           CommonAPI                      ( DerComp
-                                                    ( -- res_gradmodoflincomb_double
-                                                    -- , res_gradmodoflincomb_int
-                                                    -- , res_gradmodoflincomb_bool
-                                                    -- ,
+                                                    (  res_gradmodoflincomb_double
+                                                     , res_gradmodoflincomb_int
+                                                     , res_gradmodoflincomb_bool
+                                                     ,
                                                     res_lincomb_bool
                                                     , res_lincomb_double
                                                     , res_lincomb_int
@@ -65,6 +65,7 @@ import           Servant.Reflex                 ( BaseUrl(BasePath)
                                                 , ReqResult
                                                 , client
                                                 , reqSuccess
+                                                , reqFailure
                                                 )
 import           Test.QuickCheck                ( elements
                                                 , generate
@@ -352,7 +353,7 @@ body = do
                           [void (updated dynExpString), void (updated dynWord)]
 
             derCompsDyn <- holdDyn invalidRep $ fmapMaybe reqSuccess res
-            -- let errs = fmapMaybe reqFailure res
+            let errs = fmapMaybe reqFailure res
 
         el "hr" $ return ()
         el "h2"
@@ -377,18 +378,18 @@ body = do
                   expAndResWidgetLine "LinComb (SR Double)"
                                       dynWord
                                       (res_lincomb_double <$> derCompsDyn)
-                --   expAndResWidgetLine
-                --       "GradedModuleOfLinComb (SR Bool)"
-                --       dynWord
-                --       (res_gradmodoflincomb_bool <$> derCompsDyn)
-                --   expAndResWidgetLine
-                --       "GradedModuleOfLinComb (SR Int)"
-                --       dynWord
-                --       (res_gradmodoflincomb_int <$> derCompsDyn)
-                --   expAndResWidgetLine
-                --       "GradedModuleOfLinComb (SR Double)"
-                --       dynWord
-                --       (res_gradmodoflincomb_double <$> derCompsDyn)
+                  expAndResWidgetLine
+                      "GradedModuleOfLinComb (SR Bool)"
+                      dynWord
+                      (res_gradmodoflincomb_bool <$> derCompsDyn)
+                  expAndResWidgetLine
+                      "GradedModuleOfLinComb (SR Int)"
+                      dynWord
+                      (res_gradmodoflincomb_int <$> derCompsDyn)
+                  expAndResWidgetLine
+                      "GradedModuleOfLinComb (SR Double)"
+                      dynWord
+                      (res_gradmodoflincomb_double <$> derCompsDyn)
     footer
 
 

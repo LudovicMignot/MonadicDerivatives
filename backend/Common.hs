@@ -18,6 +18,12 @@ import           Data.Star                      ( Star
                                                 )
 import           GenMonad.GenMonad             as G
                                                 ( GenMonad(return) )
+import           Graded.GradedFun               ( Graduation(GradFun) )
+import           Graded.GradedModule            ( GradedModule(GradMod) )
+import           Graded.GradedModuleOfLinComb   ( FunctorCompo(..)
+                                                , GradedModuleOfLinComb(..)
+                                                )
+import qualified Graded.GradedModuleOfLinComb  as GL
 import           LinComb.LinComb4              as L4
                                                 ( LinComb
                                                 , fromScalar
@@ -39,6 +45,12 @@ instance Castable t (LinComb t ()) where
 
 instance Semiring t => Castable (LinComb t ()) t where
   cast = L4.toScalar
+
+instance {-# OVERLAPS #-} (Semiring b, Castable b t) => Castable (GradedModuleOfLinComb b ()) t where
+  cast (Grd (FunctorCompo (GradMod (GradFun _ f) v))) = cast $ f $ fmap cast v
+
+instance {-# OVERLAPS #-} (Castable t b, ToString b) => Castable t (GradedModuleOfLinComb b ()) where
+  cast b = GL.fromScalar $ cast b
 
 instance Castable (Maybe ()) Bool where
   cast Nothing   = False
@@ -66,6 +78,9 @@ class (Read (ReadProxy t), Castable (ReadProxy t) t) => ReadVia t where
   readMaybeVia :: String -> Maybe t
   readMaybeVia s = cast <$> (readMaybe s :: Maybe (ReadProxy t))
 
+instance (Read b, Show b) => ReadVia (GradedModuleOfLinComb b ()) where
+  type ReadProxy (GradedModuleOfLinComb b ()) = b
+
 instance Read b => ReadVia (LinComb b ()) where
   type ReadProxy (LinComb b ()) = b
 
@@ -79,6 +94,9 @@ class (ToString (ToStringProxy t), Castable t (ToStringProxy t)) => ToStringVia 
   type ToStringProxy t
   toStringVia :: t -> String
   toStringVia t = toString (cast t :: ToStringProxy t)
+
+instance (Semiring b, ToString b) => ToStringVia (GradedModuleOfLinComb b ()) where
+  type ToStringProxy (GradedModuleOfLinComb b ()) = b
 
 instance (Semiring b, ToString b) => ToStringVia (LinComb b ()) where
   type ToStringProxy (LinComb b ()) = b

@@ -3,9 +3,10 @@
 {-# LANGUAGE UndecidableInstances #-}
 module Semimodule.Semimodule where
 
+import           Common                         ( Castable(cast) )
 import           Data.Bifunctor                 ( first )
 import           Data.Semiring                  ( Add(Add)
-                                                , Semiring
+                                                , Semiring(one, zero)
                                                 , times
                                                 )
 import           Data.Set                       ( Set )
@@ -17,7 +18,14 @@ import           GenMonad.GenMonad             as G
                                                     , (<*)
                                                     )
                                                 )
+import           Graded.GradedFun               ( Graduation(GradFun) )
+import           Graded.GradedModule            ( GradedModule(GradMod) )
+import           Graded.GradedModuleOfLinComb   ( FunctorCompo(..)
+                                                , GradedModuleOfLinComb(..)
+                                                , toScalar
+                                                )
 import           LinComb.LinComb4               ( LinComb )
+import           ToString.ToString              ( ToString(toString) )
 
 class (Semiring k, Monoid a) => Semimodule k a where
     leftAction :: k -> a -> a
@@ -63,4 +71,25 @@ instance (Semiring w, Ord k, Ord w, Semigroup w) => Semimodule (LinComb w ()) (L
     leftAction  = (G.*>)
     rightAction = (G.<*)
 
+instance (Show t, Monoid t, Semiring t, Eq t) => Semimodule (GradedModuleOfLinComb t ())  (GradedModuleOfLinComb t a) where
+    leftAction w g@(Grd (FunctorCompo (GradMod (GradFun n f) v)))
+        | w == zero = zero
+        | w == one = g
+        | otherwise = Grd $ FunctorCompo
+            (GradMod
+                (GradFun ("#" ++ toString (toScalar w) ++ "*" ++ n ++ "#")
+                         ((cast w `times`) . f)
+                )
+                v
+            )
+    rightAction g@(Grd (FunctorCompo (GradMod (GradFun n f) v))) w
+        | w == zero = zero
+        | w == one = g
+        | otherwise = Grd $ FunctorCompo
+            (GradMod
+                (GradFun ("#" ++ n ++ "*" ++ toString (toScalar w) ++ "#")
+                         ((`times` cast w) . f)
+                )
+                v
+            )
 

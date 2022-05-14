@@ -30,6 +30,7 @@ import           Data.Type.Equality             ( type (:~:)(Refl)
                                                 , outer
                                                 , sym
                                                 )
+import           Graded.GradedModuleOfLinComb   ( GradedModuleOfLinComb )
 import           LinComb.LinComb4              as L4
                                                 ( LinComb )
 import           Prelude                 hiding ( head
@@ -70,7 +71,13 @@ testBoolish s = case (sing :: Sing (Set2.Set ())) %~ s of
         Proved a -> Just $ isBoolWithEq a
         _        -> case (sing :: Sing (LinComb (SRD.SR Bool) ())) %~ s of
             Proved a -> Just $ isBoolWithEq a
-            _        -> Nothing
+            _ ->
+                case
+                        (sing :: Sing (GradedModuleOfLinComb (SRD.SR Bool) ()))
+                            %~ s
+                    of
+                        Proved a -> Just $ isBoolWithEq a
+                        _        -> Nothing
 
 isBoolFunWithEq
     :: forall n m m' a
@@ -94,7 +101,13 @@ testBoolFunish1 _ s = case (sing :: Sing (Set2.Set ())) %~ s of
         Proved a -> Just $ isBoolFunWithEq a
         _        -> case (sing :: Sing (LinComb (SRD.SR Bool) ())) %~ s of
             Proved a -> Just $ isBoolFunWithEq a
-            _        -> Nothing
+            _ ->
+                case
+                        (sing :: Sing (GradedModuleOfLinComb (SRD.SR Bool) ()))
+                            %~ s
+                    of
+                        Proved a -> Just $ isBoolFunWithEq a
+                        _        -> Nothing
 
 testBoolFunish2
     :: forall a m
@@ -108,7 +121,13 @@ testBoolFunish2 _ s = case (sing :: Sing (Set2.Set ())) %~ s of
         Proved a -> Just $ isBoolFunWithEq a
         _        -> case (sing :: Sing (LinComb (SRD.SR Bool) ())) %~ s of
             Proved a -> Just $ isBoolFunWithEq a
-            _        -> Nothing
+            _ ->
+                case
+                        (sing :: Sing (GradedModuleOfLinComb (SRD.SR Bool) ()))
+                            %~ s
+                    of
+                        Proved a -> Just $ isBoolFunWithEq a
+                        _        -> Nothing
 
 notExpIfBool
     :: forall m a
@@ -170,21 +189,74 @@ gradExtDistIfWellTyped
     => UnknownSizedVect (MonadicRegExp m a)
     -> Maybe (MonadicRegExp m a)
 gradExtDistIfWellTyped v =
-    case (sing :: (Sing (LinComb (SR Int) ()))) %~ (sing :: Sing (m ())) of
-        Proved a ->
-            Just $ castWith (eqMonEqExp a) $ (gradExtDist' @(SRD.SR Int))
-                (castWith (sym (apply Refl (eqMonEqExp a))) v)
-        _ ->
-            case
-                    (sing :: (Sing (LinComb (SR Double) ())))
-                        %~ (sing :: Sing (m ()))
-                of
-                    Proved a ->
-                        Just
-                            $ castWith (eqMonEqExp a)
-                            $ (gradExtDist' @(SRD.SR Double))
-                                  (castWith (sym (apply Refl (eqMonEqExp a))) v)
-                    _ -> Nothing
+    case
+            (sing :: (Sing (GradedModuleOfLinComb (SRD.SR Int) ())))
+                %~ (sing :: Sing (m ()))
+        of
+            Proved a ->
+                Just $ castWith (eqMonEqExp a) $ (gradExtDist' @(SRD.SR Int))
+                    (castWith (sym (apply Refl (eqMonEqExp a))) v)
+            _ ->
+                case
+                        (sing :: ( Sing
+                                    (GradedModuleOfLinComb (SRD.SR Double) ())
+                              )
+                            )
+                            %~ (sing :: Sing (m ()))
+                    of
+                        Proved a ->
+                            Just
+                                $ castWith (eqMonEqExp a)
+                                $ (gradExtDist' @(SRD.SR Double))
+                                      (castWith
+                                          (sym (apply Refl (eqMonEqExp a)))
+                                          v
+                                      )
+                        _ ->
+                            case
+                                    (sing :: (Sing (LinComb (SR Int) ())))
+                                        %~ (sing :: Sing (m ()))
+                                of
+                                    Proved a ->
+                                        Just
+                                            $ castWith (eqMonEqExp a)
+                                            $ (gradExtDist' @(SRD.SR Int))
+                                                  (castWith
+                                                      (sym
+                                                          (apply
+                                                              Refl
+                                                              (eqMonEqExp a)
+                                                          )
+                                                      )
+                                                      v
+                                                  )
+                                    _ ->
+                                        case
+                                                (sing :: ( Sing
+                                                            (LinComb (SR Double) ())
+                                                      )
+                                                    )
+                                                    %~ (sing :: Sing (m ()))
+                                            of
+                                                Proved a ->
+                                                    Just
+                                                        $ castWith
+                                                              (eqMonEqExp a)
+                                                        $ (gradExtDist'
+                                                            @(SRD.SR Double)
+                                                          )
+                                                              (castWith
+                                                                  (sym
+                                                                      (apply
+                                                                          Refl
+                                                                          (eqMonEqExp
+                                                                              a
+                                                                          )
+                                                                      )
+                                                                  )
+                                                                  v
+                                                              )
+                                                _ -> Nothing
 
 gradExtMultIfWellTyped
     :: forall m a
@@ -192,21 +264,74 @@ gradExtMultIfWellTyped
     => UnknownSizedVect (MonadicRegExp m a)
     -> Maybe (MonadicRegExp m a)
 gradExtMultIfWellTyped v =
-    case (sing :: (Sing (LinComb (SR Int) ()))) %~ (sing :: Sing (m ())) of
-        Proved a ->
-            Just $ castWith (eqMonEqExp a) $ (gradExtMult' @(SRD.SR Int))
-                (castWith (sym (apply Refl (eqMonEqExp a))) v)
-        _ ->
-            case
-                    (sing :: (Sing (LinComb (SR Double) ())))
-                        %~ (sing :: Sing (m ()))
-                of
-                    Proved a ->
-                        Just
-                            $ castWith (eqMonEqExp a)
-                            $ (gradExtMult' @(SRD.SR Double))
-                                  (castWith (sym (apply Refl (eqMonEqExp a))) v)
-                    _ -> Nothing
+    case
+            (sing :: (Sing (GradedModuleOfLinComb (SRD.SR Int) ())))
+                %~ (sing :: Sing (m ()))
+        of
+            Proved a ->
+                Just $ castWith (eqMonEqExp a) $ (gradExtMult' @(SRD.SR Int))
+                    (castWith (sym (apply Refl (eqMonEqExp a))) v)
+            _ ->
+                case
+                        (sing :: ( Sing
+                                    (GradedModuleOfLinComb (SRD.SR Double) ())
+                              )
+                            )
+                            %~ (sing :: Sing (m ()))
+                    of
+                        Proved a ->
+                            Just
+                                $ castWith (eqMonEqExp a)
+                                $ (gradExtMult' @(SRD.SR Double))
+                                      (castWith
+                                          (sym (apply Refl (eqMonEqExp a)))
+                                          v
+                                      )
+                        _ ->
+                            case
+                                    (sing :: (Sing (LinComb (SR Int) ())))
+                                        %~ (sing :: Sing (m ()))
+                                of
+                                    Proved a ->
+                                        Just
+                                            $ castWith (eqMonEqExp a)
+                                            $ (gradExtMult' @(SRD.SR Int))
+                                                  (castWith
+                                                      (sym
+                                                          (apply
+                                                              Refl
+                                                              (eqMonEqExp a)
+                                                          )
+                                                      )
+                                                      v
+                                                  )
+                                    _ ->
+                                        case
+                                                (sing :: ( Sing
+                                                            (LinComb (SR Double) ())
+                                                      )
+                                                    )
+                                                    %~ (sing :: Sing (m ()))
+                                            of
+                                                Proved a ->
+                                                    Just
+                                                        $ castWith
+                                                              (eqMonEqExp a)
+                                                        $ (gradExtMult'
+                                                            @(SRD.SR Double)
+                                                          )
+                                                              (castWith
+                                                                  (sym
+                                                                      (apply
+                                                                          Refl
+                                                                          (eqMonEqExp
+                                                                              a
+                                                                          )
+                                                                      )
+                                                                  )
+                                                                  v
+                                                              )
+                                                _ -> Nothing
 
 arithMeanIfWellTyped
     :: forall m a
@@ -214,10 +339,21 @@ arithMeanIfWellTyped
     => UnknownSizedVect (MonadicRegExp m a)
     -> Maybe (MonadicRegExp m a)
 arithMeanIfWellTyped v =
-    case (sing :: (Sing (LinComb (SR Double) ()))) %~ (sing :: Sing (m ())) of
-        Proved a -> Just $ castWith (eqMonEqExp a) $ arithMean'
-            (castWith (sym (apply Refl (eqMonEqExp a))) v)
-        _ -> Nothing
+    case
+            (sing :: (Sing (GradedModuleOfLinComb (SRD.SR Double) ())))
+                %~ (sing :: Sing (m ()))
+        of
+            Proved a -> Just $ castWith (eqMonEqExp a) $ arithMean'
+                (castWith (sym (apply Refl (eqMonEqExp a))) v)
+            _ ->
+
+                case
+                        (sing :: (Sing (LinComb (SR Double) ())))
+                            %~ (sing :: Sing (m ()))
+                    of
+                        Proved a -> Just $ castWith (eqMonEqExp a) $ arithMean'
+                            (castWith (sym (apply Refl (eqMonEqExp a))) v)
+                        _ -> Nothing
 
 geomMeanIfWellTyped
     :: forall m a
@@ -225,7 +361,18 @@ geomMeanIfWellTyped
     => UnknownSizedVect (MonadicRegExp m a)
     -> Maybe (MonadicRegExp m a)
 geomMeanIfWellTyped v =
-    case (sing :: (Sing (LinComb (SR Double) ()))) %~ (sing :: Sing (m ())) of
-        Proved a -> Just $ castWith (eqMonEqExp a) $ geomMean'
-            (castWith (sym (apply Refl (eqMonEqExp a))) v)
-        _ -> Nothing
+    case
+            (sing :: (Sing (GradedModuleOfLinComb (SRD.SR Double) ())))
+                %~ (sing :: Sing (m ()))
+        of
+            Proved a -> Just $ castWith (eqMonEqExp a) $ geomMean'
+                (castWith (sym (apply Refl (eqMonEqExp a))) v)
+            _ ->
+
+                case
+                        (sing :: (Sing (LinComb (SR Double) ())))
+                            %~ (sing :: Sing (m ()))
+                    of
+                        Proved a -> Just $ castWith (eqMonEqExp a) $ geomMean'
+                            (castWith (sym (apply Refl (eqMonEqExp a))) v)
+                        _ -> Nothing

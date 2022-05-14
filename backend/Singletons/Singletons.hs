@@ -19,9 +19,10 @@ import qualified Data.Set                      as Set2
 import           Data.Singletons
 import           Data.Singletons.CustomStar
 import           Graded.GradedModule            ( GradedModule )
+import           Graded.GradedModuleOfLinComb   ( GradedModuleOfLinComb )
 import qualified LinComb.LinComb4              as L4
 import           SemiRingsDef.SemiRingsDef      ( SR )
 
 type Unit = ()
 
-$(singletonStar [''SR, ''Int, ''Bool, ''Maybe, ''Unit, ''L4.LinComb, ''GradedModule, ''Set2.Set, ''Char, ''Double])
+$(singletonStar [''SR, ''Int, ''Bool, ''Maybe, ''Unit, ''L4.LinComb, ''GradedModule, ''Set2.Set, ''GradedModuleOfLinComb, ''Char, ''Double])
