@@ -88,8 +88,8 @@ instance
   (ToString a, ToStringVia (m ())) =>
   ToString (MonadicRegExp m a)
   where
-    toString Empty    = "0"
-    toString Epsilon  = "1"
+    toString Empty    = "∅"
+    toString Epsilon  = "Ɛ"
     toString (Atom a) = toString a
     toString (LeftAction w e) =
         mconcat ["[", toStringVia w, "]", "*>", parentheses e]

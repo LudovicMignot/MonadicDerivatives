@@ -1,6 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Semimodule.Semimodule where
 
 import           Common                         ( Castable(cast) )
@@ -74,7 +75,7 @@ instance (Semiring w, Ord k, Ord w, Semigroup w) => Semimodule (LinComb w ()) (L
 -- instance (Show t, Monoid t, Semiring t, Eq t, Ord a, Eq(LinComb t a), Ord t, Monoid a) => Semimodule (GradedModuleOfLinComb t ())  (GradedModuleOfLinComb t a) where
 instance (Show t, Monoid t, Semiring t, Eq t) => Semimodule (GradedModuleOfLinComb t ())  (GradedModuleOfLinComb t a) where
     leftAction w g@(Grd (FunctorCompo (GradMod (GradFun n f) v)))
-        | w == zero = zero
+        | w == zero || n == show (zero :: t) = zero
         | w == one = g
         | otherwise = Grd $ FunctorCompo
             (GradMod
@@ -84,7 +85,7 @@ instance (Show t, Monoid t, Semiring t, Eq t) => Semimodule (GradedModuleOfLinCo
                 v
             )
     rightAction g@(Grd (FunctorCompo (GradMod (GradFun n f) v))) w
-        | w == zero = zero
+        | w == zero || n == show (zero :: t) = zero
         | w == one = g
         | otherwise = Grd $ FunctorCompo
             (GradMod

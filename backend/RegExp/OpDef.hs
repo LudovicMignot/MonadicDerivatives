@@ -67,7 +67,11 @@ import           LinComb.LinComb4              as L4
 import           Prelude                 hiding ( head
                                                 , last
                                                 )
-import           RegExp.MonadicRegExpWithFun    ( MonadicRegExp(Empty, Fun)
+import           RegExp.MonadicRegExpWithFun    ( MonadicRegExp
+                                                    ( Empty
+                                                    , Epsilon
+                                                    , Fun
+                                                    )
                                                 , conc'
                                                 , leftAction'
                                                 , plus'
@@ -114,8 +118,16 @@ instance (Semiring weight, Ord weight) => ToExp (L4.LinComb weight) where
 --                       (LinComb t (MonadicRegExp (GradedModuleOfLinComb t) a))) => Semimodule (MonadicRegExp (GradedModuleOfLinComb t) a) (GradedModuleOfLinComb t (MonadicRegExp (GradedModuleOfLinComb t) a)) where
 instance (Monoid t, Semiring t, Show t, Ord t, Ord a) => Semimodule (MonadicRegExp (GradedModuleOfLinComb t) a) (GradedModuleOfLinComb t (MonadicRegExp (GradedModuleOfLinComb t) a)) where
 
-    leftAction e fc = G.return $ e `conc'` toExp fc
-    rightAction fc e = G.return $ toExp fc `conc'` e
+    leftAction Empty   _  = mempty
+    leftAction Epsilon fc = fc
+    leftAction e       fc = case toExp fc of
+        Empty -> mempty
+        e'    -> G.return $ e `conc'` e'
+    rightAction _  Empty   = mempty
+    rightAction fc Epsilon = fc
+    rightAction fc e       = case toExp fc of
+        Empty -> mempty
+        e'    -> G.return $ e' `conc'` e
 
 data BooleanOp = Not | And | Impl | Or
   deriving (Eq, Ord)

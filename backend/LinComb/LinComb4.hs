@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module LinComb.LinComb4 where
 
@@ -140,7 +139,9 @@ instance {-# OVERLAPS #-} (Semiring weight, Eq weight, ToString key, ToString we
         stringFromCouple (k, w)
             | w == one = toHTMLString k
             | otherwise = mconcat
-                [ toString w
+                [ "<span style=\"font-weight : bold; color : blue\" >"
+                , toString w
+                , "</span>"
                 , "<span style=\"font-weight : bold; color : blue\" >[</span>"
                 , toString k
                 , "<span style=\"font-weight : bold; color : blue\" >]</span>"
