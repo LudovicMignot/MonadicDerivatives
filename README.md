@@ -3,7 +3,7 @@
 ## Backend
 
 - to compile the backend: stack build
-- to run it (to launch the server): stack exec Regexp-exe
+- to run it (to launch the server): stack exec RegExp-exe
 
 ## Frontend
 
