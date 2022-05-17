@@ -21,14 +21,21 @@ import           Data.Semiring                  ( Semiring(one)
 import           Data.Singletons                ( Sing
                                                 , SingI(sing)
                                                 )
+import           Data.Singletons.CustomStar     ( type (:~:)(Refl)
+                                                , Decision(Proved)
+                                                , SDecide((%~))
+                                                )
 import           Data.Singletons.Prelude        ( (%+) )
 import           Data.Singletons.TypeLits       ( SNat(SNat) )
 import           Data.Vector.Sized             as V
-                                                ( Vector
+                                                ( (++)
+                                                , Vector
                                                 , cons
+                                                , drop
                                                 , empty
                                                 , head
                                                 , tail
+                                                , take
                                                 )
 import           GenMonad.GenMonad             as G
                                                 ( GenMonad
@@ -64,9 +71,11 @@ import           ToString.ToString              ( ToString
                                                   )
                                                 )
 
+
 newtype FunctorCompo f g a = FunctorCompo {run :: f (g a)}
   deriving (Eq, Ord)
   deriving newtype (Show, Semigroup, Monoid, Semiring)
+
 
 instance {-# OVERLAPS #-} ToString (f (g a)) => ToString (FunctorCompo f g a) where
   toString (FunctorCompo c) = toString c
@@ -118,7 +127,33 @@ instance (Semiring b, ToString b, Eq b) => IsReducible (GradedModule b) (LinComb
   reduce (GradMod f v) = combineToModule sing f $ Prelude.fmap toGradedModule v
 
 newtype GradedModuleOfLinComb b a = Grd (FunctorCompo (GradedModule b) (LinComb b) a)
-  deriving newtype (Semigroup, Monoid, Semiring)
+  deriving newtype ( Semigroup, Monoid, Semiring)
+--   deriving newtype ( Semiring)
+
+
+-- deriving instance (Show t, Monoid t, Eq(LinComb t a), Ord a, Semiring t, Ord t, Monoid a) => Monoid (GradedModuleOfLinComb t a)
+
+-- instance (Monoid t, Show t, Eq(LinComb t a), Ord a, Semiring t, Ord t, Monoid a) => Semigroup (GradedModuleOfLinComb t a) where
+--   Grd (FunctorCompo g@(GradMod (GradFun s f) (v :: Vector n (LinComb t a)))) <> Grd (FunctorCompo g'@(GradMod (GradFun s' f') (v' :: Vector
+--       n1
+--       (LinComb t a))))
+--     | s == show (mempty :: t)
+--     = Grd $ FunctorCompo g'
+--     | s' == show (mempty :: t)
+--     = Grd $ FunctorCompo g
+--     | otherwise
+--     = case (SNat :: Sing n) %~ (SNat :: Sing 1) of
+--       Proved Refl | head v == G.return mempty && s == "id" ->
+--         Grd $ FunctorCompo g'
+--       _ -> case (SNat :: Sing n1) %~ (SNat :: Sing 1) of
+--         Proved Refl | head v' == mempty && s' == "id" -> Grd $ FunctorCompo g
+--         _ -> case (SNat :: Sing n) %+ (SNat :: Sing n1) of
+--           SNat -> Grd $ FunctorCompo $ GradMod
+--             (GradFun ("<" P.++ s P.++ "+" P.++ s' P.++ ">")
+--                      (\v'' -> f (take v'') <> f' (drop v''))
+--             )
+--             (v ++ v')
+
 deriving instance (Eq (LinComb b a)) => Eq (GradedModuleOfLinComb b a)
 deriving instance (Ord (LinComb b a)) => Ord (GradedModuleOfLinComb b a)
 

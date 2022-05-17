@@ -110,7 +110,10 @@ instance (Semiring weight, Ord weight) => ToExp (L4.LinComb weight) where
         Empty
         l
 
+-- instance (Monoid t, Semiring t, Show t, Ord t, Ord a, Eq
+--                       (LinComb t (MonadicRegExp (GradedModuleOfLinComb t) a))) => Semimodule (MonadicRegExp (GradedModuleOfLinComb t) a) (GradedModuleOfLinComb t (MonadicRegExp (GradedModuleOfLinComb t) a)) where
 instance (Monoid t, Semiring t, Show t, Ord t, Ord a) => Semimodule (MonadicRegExp (GradedModuleOfLinComb t) a) (GradedModuleOfLinComb t (MonadicRegExp (GradedModuleOfLinComb t) a)) where
+
     leftAction e fc = G.return $ e `conc'` toExp fc
     rightAction fc e = G.return $ toExp fc `conc'` e
 
@@ -274,10 +277,9 @@ instance HasName FloatingOp where
 
 instance Floating (m a) => HasFun FloatingOp n m a where
     fun GradArithMean es =
-        if length es == 0 then 0 else sum es / fromIntegral (length es)
-    fun GradGeomMean es = if length es == 0
-        then 1
-        else product es ** (1 / fromIntegral (length es))
+        if null es then 0 else sum es / fromIntegral (length es)
+    fun GradGeomMean es =
+        if null es then 1 else product es ** (1 / fromIntegral (length es))
 
 instance {-# OVERLAPS #-}
   (Semiring weight, Ord a, Ord weight, Floating weight)
@@ -293,10 +295,8 @@ instance {-# OVERLAPS #-}
             $ FunctorCompo
             $ combineToModule
                   (knownLength es SNat)
-                  ( GradFun "/*/"
-                  $ \xs -> if length xs == 0
-                        then 0
-                        else sum xs / fromIntegral (length xs)
+                  (GradFun "/*/" $ \xs ->
+                      if null xs then 0 else sum xs / fromIntegral (length xs)
                   )
             $ fmap (run . \(Grd x) -> x) es
     fun GradGeomMean es =
@@ -304,9 +304,10 @@ instance {-# OVERLAPS #-}
             $ FunctorCompo
             $ combineToModule
                   (knownLength es SNat)
-                  (GradFun "/**/" $ \xs -> if length xs == 0
-                      then 1
-                      else product xs ** (1 / fromIntegral (length xs))
+                  ( GradFun "/**/"
+                  $ \xs -> if null xs
+                        then 1
+                        else product xs ** (1 / fromIntegral (length xs))
                   )
             $ fmap (run . \(Grd x) -> x) es
 

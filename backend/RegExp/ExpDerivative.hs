@@ -46,10 +46,10 @@ deriveBySymb
    => a
    -> MonadicRegExp m a
    -> m (MonadicRegExp m a)
-deriveBySymb _ Empty   = return Empty
-deriveBySymb _ Epsilon = return Empty
+deriveBySymb _ Empty   = mempty -- return Empty
+deriveBySymb _ Epsilon = mempty -- return Empty
 deriveBySymb a (Atom b) | a == b    = return Epsilon
-                        | otherwise = return Empty
+                        | otherwise = mempty -- return Empty
 deriveBySymb a (Fun op es) = fun op $ V.map (deriveBySymb a) es
 deriveBySymb a (Sum e1 e2) = deriveBySymb a e1 `mappend` deriveBySymb a e2
 deriveBySymb a (Conc e1 e2) =

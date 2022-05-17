@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module LinComb.LinComb4 where
 
@@ -37,6 +38,7 @@ import           ToString.ToString              ( ToString
                                                 )
 
 newtype LinComb weight key = LinComb {get :: Map key weight}
+--   deriving newtype ( Eq)
 
 instance Semiring weight => GenMonad (LinComb weight) where
 
@@ -73,7 +75,7 @@ fromScalar = coerce . Map.singleton ()
 null :: LinComb v k -> Bool
 null (LinComb l) = Map.null l
 
-instance (Semiring weight, Eq weight) => Eq (LinComb weight ()) where
+instance {-# OVERLAPS #-}   (Semiring weight, Eq weight) => Eq (LinComb weight ()) where
     m1 == m2 = toScalar m1 == toScalar m2
 
 instance (Semiring weight, Ord weight) => Ord (LinComb weight ()) where
