@@ -282,8 +282,8 @@ body = do
             (Proxy :: Proxy DerCompAPI)
             (Proxy :: Proxy m)
             (Proxy :: Proxy ())
-            -- (constDyn (BasePath "https://mon-test-stack.herokuapp.com/")) -- heroku
-                        (constDyn (BasePath "http://localhost:8081")) -- local
+             (constDyn (BasePath "https://mon-test-stack.herokuapp.com/")) -- heroku
+                        -- (constDyn (BasePath "http://localhost:8081")) -- local
 
     _ <- elAttr "div" ("class" =: "container") $ do
         rec
