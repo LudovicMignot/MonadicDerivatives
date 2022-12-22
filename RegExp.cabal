@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d9c2fb3bd82fd0f5ed80639475474d15ace74bee8b0c6d8cf7dabe2907e3eda7
+-- hash: 30461eca61a0654b9541af14dcd4adc06bd7e1d167e682e389afda41fd420817
 
 name:           RegExp
 version:        0.1.0.0
@@ -33,6 +33,7 @@ library
       Parser.RegExpParser
       Parser.RegExpTok
       RegExp.ArbitraryExp
+      RegExp.Capture.Capture
       RegExp.ExpDerivative
       RegExp.MonadicRegExpWithFun
       RegExp.OpClass
