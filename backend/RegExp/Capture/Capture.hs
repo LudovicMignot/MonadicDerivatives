@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -16,7 +17,6 @@ import Data.Semiring
     times,
     zero,
   )
-import qualified Data.Set as Set
 import GenMonad.GenMonad
   ( GenMonad
       ( GenMonadConstraint,
@@ -29,6 +29,7 @@ import GenMonad.GenMonad
     (>>),
     (>>=),
   )
+import Semimodule.Semimodule (Semimodule, leftAction, rightAction)
 import Prelude hiding (fmap, return, (<$>), (>>), (>>=))
 
 get :: (GenMonad m, GenMonadConstraint m (s, s)) => StateT s m s
@@ -36,6 +37,9 @@ get = StateT $ \s -> return (s, s)
 
 put :: (GenMonad m, GenMonadConstraint m ((), s)) => s -> StateT s m ()
 put s = StateT $ \_ -> return ((), s)
+
+modify :: (GenMonad m, GenMonadConstraint m ((), s)) => (s -> s) -> StateT s m ()
+modify f = StateT $ \s -> return ((), f s)
 
 -- It is for liftA2 what mapReaderT is for fmap
 liftA2StateT ::
@@ -60,6 +64,11 @@ deriving instance (Eq (m ()), Eq a, Eq c) => Eq (CaptureMonadicRegExp m c a)
 
 deriving instance (Ord (m ()), Ord a, Ord c) => Ord (CaptureMonadicRegExp m c a)
 
+plus' :: CaptureMonadicRegExp m c a -> CaptureMonadicRegExp m c a -> CaptureMonadicRegExp m c a
+plus' Empty e = e
+plus' e Empty = e
+plus' e1 e2 = e1 `Sum` e2
+
 conc' ::
   CaptureMonadicRegExp m c a ->
   CaptureMonadicRegExp m c a ->
@@ -69,6 +78,18 @@ conc' _ Empty = Empty
 conc' Epsilon e = e
 conc' e Epsilon = e
 conc' e1 e2 = e1 `Conc` e2
+
+instance Semigroup (CaptureMonadicRegExp m c a) where
+  (<>) = plus'
+
+instance Monoid (CaptureMonadicRegExp m c a) where
+  mempty = Empty
+
+instance Semiring (CaptureMonadicRegExp m c a) where
+  plus = plus'
+  times = conc'
+  zero = Empty
+  one = Epsilon
 
 fromList :: [a] -> CaptureMonadicRegExp m c a
 fromList = foldl' (\acc -> conc' acc . Atom) Epsilon
@@ -101,6 +122,9 @@ toString (Sum e1@(Sum _ _) e2) = mconcat [toString e1, "+", parentheses e2]
 toString (Sum e1 e2) = mconcat [parentheses e1, "+", parentheses e2]
 toString (LeftAction w e) = mconcat [show w, " *> ", parentheses e]
 
+-- ajouter Bar (E) = E sans epsilon ?
+-- pour le cas [1: a*b*].[1 + eps]* ?
+-- ou alors considérer que [1: a*b*].[1 + eps]* n'est pas propre ?
 nullableProper ::
   ( GenMonadConstraint m1 (m2 (), Map k [a]),
     GenMonadConstraint m2 (),
@@ -126,7 +150,7 @@ nullableProper (Conc e1 e2) =
   liftM2 times (nullableProper e1) (nullableProper e2)
 nullableProper (Star _) = return $ return ()
 nullableProper (CaptureCurrent (c, inv_xs) e) =
-  get >>= \ctxt -> put (Map.insert c xs ctxt) >> nullableProper e
+  modify (Map.insert c xs) >> nullableProper e
   where
     xs = maybe [] reverse inv_xs
 nullableProper (Captured c) =
@@ -145,31 +169,34 @@ deriveBySymbProper ::
     Monoid (m2 (m1 (), Map k [a])),
     Semiring (m2 (m1 (), Map k [a])),
     Monoid (m1 ()),
-    Semiring (m1 ()),
     GenMonad m2,
     GenMonad m1,
     Ord k,
-    Eq a
+    Eq a,
+    Semimodule (CaptureMonadicRegExp m1 k a) (m2 (CaptureMonadicRegExp m1 k a, Map k [a])),
+    Semimodule (m1 ()) (m2 (CaptureMonadicRegExp m1 k a, Map k [a]))
   ) =>
   a ->
   CaptureMonadicRegExp m1 k a ->
   StateT (Map k [a]) m2 (CaptureMonadicRegExp m1 k a)
-deriveBySymbProper _ Empty = StateT $ const mempty
-deriveBySymbProper _ Epsilon = StateT $ const mempty
+deriveBySymbProper _ Empty = StateT mempty
+deriveBySymbProper _ Epsilon = StateT mempty
 deriveBySymbProper a (Atom b)
   | a == b = return Epsilon
-  | otherwise = StateT $ const mempty
+  | otherwise = StateT mempty
 deriveBySymbProper a (Sum e1 e2) =
   liftA2StateT (<>) (deriveBySymbProper a e1) (deriveBySymbProper a e2)
 deriveBySymbProper a (Conc e1 e2) =
   liftA2StateT
     (<>)
-    (mapStateT (fmap (\(x, y) -> (x <<.>> e2, y))) (deriveBySymbProper a e1))
+    (mapStateT (`rightAction` e2) (deriveBySymbProper a e1))
     ( nullableProper e1
-        >>= \w -> mapStateT (fmap (first (LeftAction w))) (deriveBySymbProper a e2)
+        >>= \w -> mapStateT (w `leftAction`) (deriveBySymbProper a e2)
     )
 deriveBySymbProper a estar@(Star e) =
-  mapStateT (fmap (\(x, y) -> (x <<.>> estar, y))) (deriveBySymbProper a e)
+  mapStateT (`rightAction` estar) (deriveBySymbProper a e)
+deriveBySymbProper at (LeftAction w e) =
+  mapStateT (w `leftAction`) $ deriveBySymbProper at e
 deriveBySymbProper at (CaptureCurrent (c, inv_xs) e) =
   CaptureCurrent (c, inv_xs') <$> deriveBySymbProper at e
   where
@@ -181,40 +208,26 @@ deriveBySymbProper at (Captured c) =
     case c `Map.lookup` ctxt of
       Nothing -> StateT $ const mempty
       Just w -> deriveBySymbProper at $ fromList w
-deriveBySymbProper at (LeftAction w e) =
-  mapStateT (fmap (first (LeftAction w))) $ deriveBySymbProper at e
 
 deriveByWordProper ::
-  _ =>
+  ( GenMonadConstraint
+      m2
+      (CaptureMonadicRegExp m1 k a, Map k [a]),
+    GenMonadConstraint m2 ((), Map k [a]),
+    GenMonadConstraint m2 (Map k [a], Map k [a]),
+    GenMonadConstraint m2 (m1 (), Map k [a]),
+    GenMonadConstraint m1 (),
+    Monoid (m2 (m1 (), Map k [a])),
+    Monoid (m1 ()),
+    Semiring (m2 (m1 (), Map k [a])),
+    GenMonad m2,
+    GenMonad m1,
+    Ord k,
+    Eq a,
+    Semimodule (CaptureMonadicRegExp m1 k a) (m2 (CaptureMonadicRegExp m1 k a, Map k [a])),
+    Semimodule (m1 ()) (m2 (CaptureMonadicRegExp m1 k a, Map k [a]))
+  ) =>
   [a] ->
   CaptureMonadicRegExp m1 k a ->
   StateT (Map k [a]) m2 (CaptureMonadicRegExp m1 k a)
 deriveByWordProper = foldl' (\acc a -> acc >=> deriveBySymbProper a) return
-
--- exemples
-a :: CaptureMonadicRegExp Set.Set Int Char
-a = Atom 'a'
-
-b :: CaptureMonadicRegExp Set.Set Int Char
-b = Atom 'b'
-
-exp1 :: CaptureMonadicRegExp Set.Set Int Char
-exp1 = a <<+>> b
-
-exp2 :: CaptureMonadicRegExp Set.Set Int Char
-exp2 = a <<+>> b <<+>> Epsilon
-
-exp3 :: CaptureMonadicRegExp Set.Set Int Char
-exp3 = a <<.>> b
-
-exp4 :: CaptureMonadicRegExp Set.Set Int Char
-exp4 = capture 1 (Star a) <<.>> capture 2 (Star b)
-
-exp5 :: CaptureMonadicRegExp Set.Set Int Char
-exp5 = capture 1 (Star a) <<.>> capture 2 (Star b) <<.>> b
-
-res :: CaptureMonadicRegExp Set.Set Int Char -> Set.Set (Set.Set (), Map Int [Char])
-res e = runStateT (nullableProper e) Map.empty
-
-resderiv :: CaptureMonadicRegExp Set.Set Int Char -> [Char] -> Set.Set (Set.Set (), Map Int [Char])
-resderiv e w = runStateT (deriveByWordProper w e >>= nullableProper) Map.empty

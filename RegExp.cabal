@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 30461eca61a0654b9541af14dcd4adc06bd7e1d167e682e389afda41fd420817
+-- hash: 24c6c58e0508ede11ed6e633379e5cb4330e6c6c6f5ac52e17e6168060934c06
 
 name:           RegExp
 version:        0.1.0.0
@@ -34,6 +34,7 @@ library
       Parser.RegExpTok
       RegExp.ArbitraryExp
       RegExp.Capture.Capture
+      RegExp.Capture.Exemples
       RegExp.ExpDerivative
       RegExp.MonadicRegExpWithFun
       RegExp.OpClass
