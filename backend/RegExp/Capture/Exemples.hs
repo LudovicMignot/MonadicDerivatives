@@ -8,7 +8,7 @@ import GenMonad.GenMonad
   ( (>>=),
   )
 import RegExp.Capture.Capture
-  ( CaptureMonadicRegExp (Atom, Epsilon, Star),
+  ( CaptureMonadicRegExp (..),
     capture,
     deriveByWordProper,
     nullableProper,
@@ -38,6 +38,9 @@ exp4 = capture 1 (Star a) <<.>> capture 2 (Star b)
 
 exp5 :: CaptureMonadicRegExp Set.Set Int Char
 exp5 = capture 1 (Star a) <<.>> capture 2 (Star b) <<.>> b
+
+exp6 :: CaptureMonadicRegExp Set.Set Int Char
+exp6 = CaptureCurrent (1, Just "a") (Star a) <<+>> capture 1 (Star b)
 
 res :: CaptureMonadicRegExp Set.Set Int Char -> Set.Set (Set.Set (), Map Int [Char])
 res e = runStateT (nullableProper e) Map.empty

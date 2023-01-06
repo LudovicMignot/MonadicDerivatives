@@ -145,7 +145,7 @@ nullableProper Epsilon = return $ return ()
 nullableProper Empty = return mempty
 nullableProper (Atom _) = return mempty
 nullableProper (Sum e1 e2) =
-  liftM2 (<>) (nullableProper e1) (nullableProper e2)
+  liftA2StateT (<>) (nullableProper e1) (nullableProper e2)
 nullableProper (Conc e1 e2) =
   liftM2 times (nullableProper e1) (nullableProper e2)
 nullableProper (Star _) = return $ return ()
