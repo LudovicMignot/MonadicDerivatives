@@ -65,6 +65,9 @@ liftA2StateT ::
   StateT s3 m3 a3
 liftA2StateT f s1 s2 = StateT $ runStateT s1 `f` runStateT s2
 
+liftA2StateT' :: (m1 (a1, s) -> m2 (a2, s) -> m3 (a3, s)) -> StateT s m1 a1 -> StateT s m2 a2 -> StateT s m3 a3
+liftA2StateT' f s1 s2 = StateT $ \s -> f (runStateT s1 s) (runStateT s2 s)
+
 data CaptureMonadicRegExp m c a
   = Sum (CaptureMonadicRegExp m c a) (CaptureMonadicRegExp m c a)
   | Conc (CaptureMonadicRegExp m c a) (CaptureMonadicRegExp m c a)
